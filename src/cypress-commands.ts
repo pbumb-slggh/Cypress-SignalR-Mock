@@ -1,6 +1,7 @@
 /// <reference types="cypress" />
 import Log from "./log";
 import IServerInvoke from "./types/IServerInvoke";
+import IServerSend from "./types/IServerSend.ts";
 import {
   clearCypressSignalrMockData,
   getCypressSignalrMockData,
@@ -23,11 +24,17 @@ export function setupCypressCommands() {
 
   cypress.Commands.add("hubPublish", hubPublish);
 
-  cypress.Commands.add("hubVerifyInvokes", hubVerify);
+  cypress.Commands.add("hubVerifyInvokes", hubVerifyInvokes);
+
+  cypress.Commands.add("hubVerifySends", hubVerifySends);
 
   cypress.Commands.add("hubClear", hubClear);
 
   cypress.Commands.add("hubPrintData", hubPrintData);
+
+  cypress.Commands.add("hubMockClearInvokes", hubMockClearInvokes);
+
+  cypress.Commands.add("hubMockClearSends", hubMockClearSends);
 }
 
 export function hubMockInvoke(hubName: string, methodName: string, payload: any) {
@@ -57,7 +64,7 @@ export function hubPublish(hubName: string, messageType: string, ...payload: any
   hubConnectionMock.publish(messageType, ...payload);
 }
 
-export function hubVerify(
+export function hubVerifyInvokes(
   hubName: string,
   messageType: string,
   callback?: (invokes: IServerInvoke[]) => void
@@ -65,11 +72,26 @@ export function hubVerify(
   const hubConnectionMock = getHubConnectionMock(hubName);
   if (!hubConnectionMock) {
     Log.error(
-      `[cy.hubVerify] - HubConnectionMock not found for hub with name: ${hubName}`
+      `[cy.hubVerifyInvokes] - HubConnectionMock not found for hub with name: ${hubName}`
     );
     return;
   }
-  hubConnectionMock.verify(messageType, callback);
+  hubConnectionMock.verifyInvokes(messageType, callback);
+}
+
+export function hubVerifySends(
+  hubName: string,
+  messageType: string,
+  callback?: (invokes: IServerSend[]) => void
+) {
+  const hubConnectionMock = getHubConnectionMock(hubName);
+  if (!hubConnectionMock) {
+    Log.error(
+      `[cy.hubVerifySends] - HubConnectionMock not found for hub with name: ${hubName}`
+    );
+    return;
+  }
+  hubConnectionMock.verifySends(messageType, callback);
 }
 
 export function hubPrintData() {
@@ -81,4 +103,30 @@ export function hubPrintData() {
 
 export function hubClear() {
   clearCypressSignalrMockData();
+}
+
+
+export function hubMockClearInvokes(hubName: string, methodName?: string) {
+  const hubConnectionMock = getHubConnectionMock(hubName);
+  if (!hubConnectionMock) {
+    Log.error(
+      `[cy.hubMockClearInvokes] - HubConnectionMock not found for hub with name: ${hubName}`
+    );
+    return;
+  }
+
+  hubConnectionMock.clearInvokes(methodName);
+}
+
+
+export function hubMockClearSends(hubName: string, methodName?: string) {
+  const hubConnectionMock = getHubConnectionMock(hubName);
+  if (!hubConnectionMock) {
+    Log.error(
+      `[cy.hubMockClearSends] - HubConnectionMock not found for hub with name: ${hubName}`
+    );
+    return;
+  }
+
+  hubConnectionMock.clearSends(methodName);
 }

@@ -1,5 +1,5 @@
-import { vi, test, expect, describe } from "vitest";
-import { useCypressSignalRMock, hubPublish } from "../src";
+import { describe, expect, test } from "vitest";
+import { hubPublish, useCypressSignalRMock } from "../src";
 
 describe("hubPublish() method", () => {
   test("Should receive all values in SignalR listener when hubPublish() is called multiple times", () => {
@@ -9,7 +9,7 @@ describe("hubPublish() method", () => {
       enableForVitest: true,
     });
 
-    connection.on("progress", (value) => {
+    connection!.on("progress", (value) => {
       publishResult.push(value);
     });
 

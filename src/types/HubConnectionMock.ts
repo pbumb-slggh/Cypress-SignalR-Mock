@@ -1,9 +1,10 @@
-import Log from "../log";
-import { Subject } from "rxjs";
-import IPayload from "./IPayload";
-import { IHubConnectionData } from "./IHubConnectionData";
-import IServerInvoke from "./IServerInvoke";
 import { IStreamResult, Subject as SignalrSubject } from "@microsoft/signalr";
+import { Subject } from "rxjs";
+import Log from "../log";
+import { IHubConnectionData } from "./IHubConnectionData";
+import IPayload from "./IPayload";
+import IServerInvoke from "./IServerInvoke";
+import IServerSend from "./IServerSend";
 
 /**
  * Mock implementation of HubConnection,
@@ -12,6 +13,7 @@ import { IStreamResult, Subject as SignalrSubject } from "@microsoft/signalr";
 export default class HubConnectionMock {
   private _hubConnectionData: IHubConnectionData[] = [];
   private _serverInvokes: IServerInvoke[] = [];
+  private _serverSends: IServerSend[] = [];
   private _invokeResponses: { [key: string]: any } = {};
   public name: string;
 
@@ -37,20 +39,48 @@ export default class HubConnectionMock {
     });
   }
 
-  public verify(
+  public verifyInvokes(
     messageType: string,
     callback?: (invokes: IServerInvoke[]) => void
   ): void {
-    messageType = messageType.toLowerCase();
-
     const currentInvokes = this._serverInvokes.filter(
       (s) => s.action === messageType
-    );
+    ).sort((a, b) => a.timestamp - b.timestamp);
 
     if (callback) {
       callback(currentInvokes);
     }
   }
+
+  public verifySends(
+    messageType: string,
+    callback?: (invokes: IServerSend[]) => void
+  ): void {
+    const currentSends = this._serverSends.filter(
+      (s) => s.action === messageType
+    ).sort((a, b) => a.timestamp - b.timestamp);
+
+    if (callback) {
+      callback(currentSends);
+    }
+  }
+
+  public clearInvokes(methodName? : string): void {
+    if (methodName) {
+      this._serverInvokes = this._serverInvokes.filter(invoke => invoke.action !== methodName);
+    } else {
+      this._serverInvokes = [];
+    }
+  }
+
+  public clearSends(methodName? : string): void {
+    if (methodName) {
+      this._serverSends = this._serverSends.filter(send => send.action !== methodName);
+    } else {
+      this._serverSends = [];
+    }
+  }
+
 
   public mockInvoke(methodName: string, payload: any) {
     this._invokeResponses[methodName] = payload;
@@ -158,7 +188,8 @@ export default class HubConnectionMock {
     return new Promise<T>((resolve) => {
       this._serverInvokes.push({
         action: methodName,
-        args,
+        args: args,
+        timestamp: Date.now()
       });
       const mockedResponse = this._invokeResponses[methodName];
       if(mockedResponse !== undefined){
@@ -270,8 +301,14 @@ export default class HubConnectionMock {
    */
   // @ts-ignore
   public send(methodName: string, ...args: any[]): Promise<void> {
-    return Promise.resolve();
+    return new Promise<void>((resolve) => {
+      this._serverSends.push({
+        action: methodName,
+        args: args,
+        timestamp: Date.now()
+      });
+      resolve();
+    });
   }
-
   // endregion
 }

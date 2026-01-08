@@ -3,16 +3,17 @@
 /// <reference types="cypress" />
 
 import { HubConnection } from "@microsoft/signalr";
-import HubConnectionMock from "./types/HubConnectionMock";
 import { setupCypressCommands } from "./cypress-commands";
+import Log from "./log.ts";
+import HubConnectionMock from "./types/HubConnectionMock";
 import IMockData from "./types/IMockData";
 import IServerInvoke from "./types/IServerInvoke";
+import IServerSend from "./types/IServerSend.ts";
 import {
   getCypressSignalrMockData,
   isCypressRunning,
   isInVitestMode,
 } from "./utils.ts";
-import Log from "./log.ts";
 
 setupCypressCommands();
 useCypressSignalRMock("default");
@@ -70,7 +71,7 @@ declare global {
       ): Chainable<Subject>;
 
       /**
-       * Verifies that a message was sent from the Client => Server
+       * Verifies that a message was sent from the Client => Server with the invoke() method
        * @param hubName The name of the hub
        * @param messageType The name of the message type
        * @param callback A callback function that will be called with the invokes
@@ -82,6 +83,18 @@ declare global {
       ): Chainable<Subject>;
 
       /**
+       * Verifies that a message was sent from the Client => Server with the send() method
+       * @param hubName The name of the hub
+       * @param messageType The name of the message type
+       * @param callback A callback function that will be called with the invokes
+       */
+      hubVerifySends(
+        hubName: string,
+        messageType: string,
+        callback?: (invokes: IServerSend[]) => void
+      ): Chainable<Subject>;
+
+      /**
        * Clears all data from the window["cypress-signalr-mock"] object
        */
       hubClear(): Chainable<Subject>;
@@ -90,15 +103,37 @@ declare global {
        * Prints the current data to console in the window["cypress-signalr-mock"] object
        */
       hubPrintData(): Chainable<Subject>;
+
+      hubMockInvoke(hubName: string, methodName: string, payload: any): Chainable<Subject>;
+
+      hubUnmockInvoke(hubName: string, methodName: string) : Chainable<Subject>;
+
+      /**
+       * Clears all called invokes for a specific hub. If methodName is provided, only clears invokes for that method.
+       * @param hubName The name of the hub
+       * @param methodName The name of the message method to clear (optional)
+       */
+      hubMockClearInvokes(hubName: string, methodName?: string): Chainable<Subject>;
+
+      /**
+       * Clears all called sends for a specific hub. If methodName is provided, only clears sends for that method.
+       * @param hubName The name of the hub
+       * @param methodName The name of the message method to clear (optional)
+       */
+      hubMockClearSends(hubName: string, methodName?: string): Chainable<Subject>;
     }
   }
 }
 
 export {
+  hubClear,
+  hubMockClearInvokes,
+  hubMockClearSends,
   hubMockInvoke,
+  hubPrintData,
   hubPublish,
   hubUnmockInvoke,
-  hubVerify,
-  hubClear,
-  hubPrintData,
+  hubVerifyInvokes,
+  hubVerifySends
 } from "./cypress-commands";
+

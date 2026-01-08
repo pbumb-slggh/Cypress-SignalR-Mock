@@ -1,4 +1,4 @@
-export default interface IServerInvoke {
+export default interface IServerSend {
   action: string;
   args: any[];
   timestamp: number;
